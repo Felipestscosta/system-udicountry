@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+// datasource db {
+//   provider = "sqlite"
+//   url      = "file:./dev.db"
+// }
+
+model Client {
+  id    String @id @default(uuid())
+  name  String
+  phone String @unique
+
+  created_at DateTime @default(now())
+  Order      Order[]
+
+  @@map("clients")
+}
+
+model Order {
+  id          String   @id @default(uuid())
+  number      Int
+  active      Boolean
+  output      DateTime
+  total       Int      @default(0)
+  enter_value Int      @default(0)
+
+  client Client @relation(fields: [clientId], references: [id])
+
+  clientId String
+
+  created_at DateTime  @default(now())
+  service    Service[]
+
+  @@map("orders")
+}
+
+model Service {
+  id          String  @id @default(uuid())
+  image       String
+  value       Int
+  amount      Int
+  description String
+  pay         Boolean
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  orderId String
+
+  created_at DateTime @default(now())
+
+  @@map("services")
+}
