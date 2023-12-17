@@ -1,29 +1,31 @@
-import { GetServerSideProps } from "next";
+import { GetServerSideProps } from "next"
 import { getSession, signIn } from "next-auth/react"
 
-import Image from "next/image";
-import Logo from "../assets/logo-udicountry.png";
+import Image from "next/image"
+import Logo from "../assets/logo-udicountry.png"
 
-export const getServerSideProps: GetServerSideProps = async ({req}) => {
-  const session = await getSession({req})
+export const getServerSideProps: GetServerSideProps = async ({ req }) => {
+  const session = await getSession({ req })
 
-  if(session){
-    return{
+  console.log(session)
+
+  if (session) {
+    return {
       redirect: {
-        destination: '/service-orders',
-        permanent: false
-      }
+        destination: "/service-orders",
+        permanent: false,
+      },
     }
   }
 
   return {
-    props: {}
+    props: {},
   }
 }
 
 export default function Home() {
-  function handleSingIn(){
-    signIn('google')
+  function handleSingIn() {
+    signIn("google")
   }
 
   return (
@@ -42,5 +44,5 @@ export default function Home() {
         Acesse com Google
       </button>
     </main>
-  );
+  )
 }
