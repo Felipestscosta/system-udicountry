@@ -2,14 +2,13 @@ import Image from "next/image"
 
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline"
 import ptBR from "date-fns/locale/pt-BR"
-import { format, set } from "date-fns"
+import { format } from "date-fns"
 
 import ScanCode from "../../components/scancode"
 import { useRouter } from "next/router"
 import { ArrowPathIcon } from "@heroicons/react/24/solid"
 import { useEffect, useState } from "react"
 import { api } from "@/lib/axios"
-import { count } from "console"
 
 export interface serviceProps {
   created_at: string
@@ -53,6 +52,10 @@ export default function App() {
       await api
         .get("/orders?limit=true&pageNumber=0")
         .then((orders: any) => setFilteredOrders(orders.data))
+
+      setIsAllOrders(true)
+      setIsTodayFilterOrderActive(false)
+      setIsFinishedOutputActive(false)
       setIsLoading(false)
     } else {
       api.get("/orders?limit=false").then((orders: any) => {
@@ -85,8 +88,10 @@ export default function App() {
   }
 
   async function handleFilterByFinish() {
-    const orders = await api.get("/orders?limit=false")
+    // No paginate
+    setHasMore(false)
 
+    const orders = await api.get("/orders?limit=false")
     const ordersFinished = orders.data
     const ordersFilteredByFinish = await ordersFinished.filter(
       (order: ordersProps) => {
