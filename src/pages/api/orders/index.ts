@@ -10,9 +10,7 @@ export default async function handler(
     const pageNumber = req.query.pageNumber
 
     if (limit === "true") {
-      // const totalOrders = await prisma.order.count()
       const perPage = 21
-      // let numberPages = totalOrders / 20;
       let valueSkip = perPage * Number(pageNumber)
 
       var orders = await prisma.order.findMany({
