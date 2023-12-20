@@ -1,17 +1,15 @@
-import { GetServerSideProps } from "next"
 import Image from "next/image"
 
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline"
 import ptBR from "date-fns/locale/pt-BR"
-// import { prisma } from "@/lib/prisma"
-import { format } from "date-fns"
+import { format, set } from "date-fns"
 
 import ScanCode from "../../components/scancode"
 import { useRouter } from "next/router"
-import { ArrowPathIcon, CircleStackIcon } from "@heroicons/react/24/solid"
-import Link from "next/link"
-import { useState } from "react"
+import { ArrowPathIcon } from "@heroicons/react/24/solid"
+import { useEffect, useState } from "react"
 import { api } from "@/lib/axios"
+import { count } from "console"
 
 export interface serviceProps {
   created_at: string
@@ -22,12 +20,9 @@ export interface serviceProps {
 export interface ordersProps {
   id: string
   number: number
-  nome: string
-  phone: string
   active: boolean
-  date: string
-  data: string
   total: number
+  output: Date
   client: { name: string; phone: string }
 }
 
@@ -37,26 +32,26 @@ interface arrayOrdersProps {
 
 export default function App() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [isAllOrders, setIsAllOrders] = useState(true)
   const [isTodayFilterOrderActive, setIsTodayFilterOrderActive] =
     useState(false)
   const [isFinishedOutputActive, setIsFinishedOutputActive] = useState(false)
   const [filteredOrders, setFilteredOrders] = useState<ordersProps[]>([])
 
-  useState(() => {
-    handleSearch("")
-  }, [])
+  // Paginacao
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
 
-  function handleSearch(wordSearch: any) {
+  async function handleSearch(wordSearch: any) {
     setIsLoading(true)
     if (
       wordSearch.length === 0 ||
-      wordSearch.length === undefined ||
-      wordSearch.length === ""
+      wordSearch === undefined ||
+      wordSearch === ""
     ) {
-      api
-        .get("/orders?limit=true")
+      await api
+        .get("/orders?limit=true&pageNumber=0")
         .then((orders: any) => setFilteredOrders(orders.data))
       setIsLoading(false)
     } else {
@@ -89,29 +84,34 @@ export default function App() {
     }
   }
 
-  function handleFilterByFinish(status: boolean) {
-    if (status) {
-      const ordersFilteredByFinish = orders.filter((order) => {
+  async function handleFilterByFinish() {
+    const orders = await api.get("/orders?limit=false")
+
+    const ordersFinished = orders.data
+    const ordersFilteredByFinish = await ordersFinished.filter(
+      (order: ordersProps) => {
         return order.active === false
-      })
-      setFilteredOrders(ordersFilteredByFinish)
-      setIsAllOrders(false)
-      setIsTodayFilterOrderActive(false)
-      setIsFinishedOutputActive(true)
-    } else {
-      setFilteredOrders(orders)
-      setIsAllOrders(true)
-      setIsTodayFilterOrderActive(false)
-      setIsFinishedOutputActive(false)
-    }
+      }
+    )
+    setFilteredOrders(ordersFilteredByFinish)
+    setIsAllOrders(false)
+    setIsTodayFilterOrderActive(false)
+    setIsFinishedOutputActive(true)
+    setIsLoading(false)
   }
 
-  function handleByToday() {
+  async function handleByToday() {
+    // No paginate
+    setHasMore(false)
+
+    setIsLoading(true)
+    const ordersByToday = await api.get("/orders?limit=false")
+    const orders = ordersByToday.data
     const currentDate = new Date()
     const formatedCurrentDate = format(currentDate, "yyyy-MM-dd")
 
     const currentDateOrders = orders.filter((order: ordersProps) => {
-      const orderDate = new Date(order.data)
+      const orderDate = new Date(order.output)
       const formatedOrderDate = format(orderDate, "yyyy-MM-dd")
       return formatedOrderDate === formatedCurrentDate
     })
@@ -121,13 +121,54 @@ export default function App() {
       setIsAllOrders(false)
       setIsFinishedOutputActive(false)
       setIsTodayFilterOrderActive(true)
+      setIsLoading(false)
     } else {
       setFilteredOrders(orders)
       setIsAllOrders(true)
       setIsFinishedOutputActive(false)
       setIsTodayFilterOrderActive(false)
+      setIsLoading(false)
     }
   }
+
+  const fetchItems = async (pageNumber: number) => {
+    const response = await api.get(
+      `/orders?limit=true&pageNumber=${pageNumber}`
+    )
+    const data = await response.data
+    if (data.length > 0) {
+      setFilteredOrders((orders) => [...orders, ...data])
+      setHasMore(true)
+    } else {
+      setHasMore(false)
+    }
+  }
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >=
+          document.body.offsetHeight - 100 &&
+        hasMore
+      ) {
+        setPage((prevPage) => prevPage + 1)
+        setHasMore(false)
+      }
+    }
+
+    // Adiciona um ouvinte de evento de rolagem apenas se o ambiente permitir
+    if (typeof window !== "undefined") {
+      window.addEventListener("scroll", handleScroll)
+
+      return () => {
+        window.removeEventListener("scroll", handleScroll)
+      }
+    }
+  })
+
+  useEffect(() => {
+    fetchItems(page)
+  }, [page])
 
   return (
     <>
@@ -148,12 +189,10 @@ export default function App() {
           <div className="flex gap-4 my-3 items-center justify-center">
             <button
               className={`${
-                isAllOrders
-                  ? "text-gray-950 font-bold underline"
-                  : "text-gray-500"
+                isAllOrders ? "text-gray-950 font-bold" : "text-gray-500"
               }`}
               onClick={() => {
-                handleFilterByFinish(false)
+                handleSearch("")
               }}
             >
               Todos
@@ -162,7 +201,7 @@ export default function App() {
             <button
               className={`${
                 isTodayFilterOrderActive
-                  ? "text-gray-950 font-bold underline"
+                  ? "text-gray-950 font-bold"
                   : "text-gray-500"
               }`}
               onClick={() => {
@@ -175,11 +214,12 @@ export default function App() {
             <button
               className={`${
                 isFinishedOutputActive
-                  ? "text-gray-950 font-bold underline"
+                  ? "text-gray-950 font-bold"
                   : "text-gray-500"
               }`}
               onClick={() => {
-                handleFilterByFinish(true)
+                handleFilterByFinish()
+                setIsLoading(true)
               }}
             >
               Entregues
@@ -188,7 +228,7 @@ export default function App() {
         </div>
 
         <div className="flex flex-col min-h-screen justify-center">
-          {filteredOrders.length === 0 ? (
+          {filteredOrders.length === 0 || isLoading ? (
             <div className="flex flex-col w-full justify-center items-center text-center gap-6">
               <ArrowPathIcon className="h-32 text-gray-300 animate-spin" />
               <p className="w-60 text-lg font-medium text-gray-300">
