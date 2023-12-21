@@ -43,12 +43,16 @@ export default function App() {
   const [hasMore, setHasMore] = useState(true)
 
   async function handleSearch(wordSearch: any) {
+    // No paginate
+    setHasMore(false)
+
     setIsLoading(true)
     if (
       wordSearch.length === 0 ||
       wordSearch === undefined ||
       wordSearch === ""
     ) {
+      setHasMore(true)
       await api
         .get("/orders?limit=true&pageNumber=0")
         .then((orders: any) => setFilteredOrders(orders.data))
