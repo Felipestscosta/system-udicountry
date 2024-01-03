@@ -1,6 +1,9 @@
 import Image from "next/image"
 
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline"
+import {
+  ExclamationTriangleIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline"
 import ptBR from "date-fns/locale/pt-BR"
 import { format } from "date-fns"
 
@@ -46,7 +49,6 @@ export default function App() {
     // No paginate
     setHasMore(false)
 
-    setIsLoading(true)
     if (
       wordSearch.length === 0 ||
       wordSearch === undefined ||
@@ -132,10 +134,10 @@ export default function App() {
       setIsTodayFilterOrderActive(true)
       setIsLoading(false)
     } else {
-      setFilteredOrders(orders)
-      setIsAllOrders(true)
+      setFilteredOrders([])
+      setIsAllOrders(false)
       setIsFinishedOutputActive(false)
-      setIsTodayFilterOrderActive(false)
+      setIsTodayFilterOrderActive(true)
       setIsLoading(false)
     }
   }
@@ -202,6 +204,7 @@ export default function App() {
               }`}
               onClick={() => {
                 handleSearch("")
+                setIsLoading(true)
               }}
             >
               Todos
@@ -237,7 +240,15 @@ export default function App() {
         </div>
 
         <div className="flex flex-col min-h-screen justify-center">
-          {filteredOrders.length === 0 || isLoading ? (
+          {filteredOrders.length === 0 ? (
+            <div className="flex flex-col w-full justify-center items-center text-center gap-6">
+              <ExclamationTriangleIcon className="h-32 text-gray-300" />
+              <p className="w-60 text-lg font-medium text-gray-300">
+                Nenhum serviço com a <strong>data de hoje</strong>, foi
+                encontrado.{" "}
+              </p>
+            </div>
+          ) : isLoading ? (
             <div className="flex flex-col w-full justify-center items-center text-center gap-6">
               <ArrowPathIcon className="h-32 text-gray-300 animate-spin" />
               <p className="w-60 text-lg font-medium text-gray-300">

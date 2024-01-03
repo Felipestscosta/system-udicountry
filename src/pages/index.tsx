@@ -27,20 +27,21 @@ export default function Home() {
   }
 
   return (
-    <main className="bg-slate-50 flex w-screen h-screen place-items-center justify-center flex-col gap-10">
-      <Image
-        src={Logo}
-        width={200}
-        quality={80}
-        alt="Logo representando a Udi Country"
-      />
-
-      <button
-        onClick={handleSingIn}
-        className="transition ease-in-out flex items-center gap-2 border border-slate-950 text-slate-950 rounded-full px-4 py-2 hover:bg-slate-950 hover:text-slate-50"
-      >
-        Acesse com Google
-      </button>
+    <main className="bg-slate-50 flex w-screen h-screen place-items-center justify-center flex-col">
+      <div className="flex flex-col items-center gap-8 border border-amber-800 rounded-2xl px-11 p-16 border-opacity-20">
+        <Image
+          src={Logo}
+          width={140}
+          quality={80}
+          alt="Logo representando a Udi Country"
+        />
+        <button
+          onClick={handleSingIn}
+          className="transition ease-in-out flex items-center justify-center gap-2 border border-amber-950 text-amber-950 rounded-full px-4 py-2 hover:bg-amber-950 hover:text-slate-50 font-bold"
+        >
+          Acesse com Google
+        </button>
+      </div>
     </main>
   )
 }
